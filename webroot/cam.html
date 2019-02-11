@@ -1,0 +1,84 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<style>
+.nopadding{padding: 0px}
+.nomargin{margin: 0px}
+</style>
+
+<div id="wrapper">
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+        <div class="nopadding container-fluid">
+            <div style="float:left">
+                <video id="video" width="640" height="400" autoplay></video>
+                <button id="snap">Snap Photo</button>
+                <div id="snapID"></div>
+                <canvas id="canvas" width="1920" height="1080" style="width: 640px; height: 400px"></canvas>
+			</div>
+		</div>
+    </div>
+    <!-- /#page-content-wrapper -->
+</div>
+<!-- /#wrapper -->
+</body>
+<script type="text/javascript">
+
+    // Grab elements, create settings, etc.
+    var video = document.getElementById('video');
+
+    // Get access to the camera!
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // Not adding `{ audio: true }` since we only want video now
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                width: {min: 640, ideal: 1920},
+                height: {min: 400, ideal: 1080}
+                //,
+                // aspectRatio: {ideal: 1.7777777778}
+            }
+
+
+        }).then(function(stream) {
+           // video.src = window.URL.createObjectURL(stream);
+            //video.src=stream;
+            //new version because the createObjectURL(stream) method is depricated
+            try {
+                video.srcObject = stream;
+            } catch (error) {
+                video.src = window.URL.createObjectURL(stream);
+            }
+            video.play();
+        });
+    }
+
+    // Elements for taking the snapshot
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    var video = document.getElementById('video');
+
+    // Trigger photo take
+    document.getElementById("snap").addEventListener("click", function() {
+        context.drawImage(video, 0, 0, 1920, 1080);
+        var opts = {
+            method: 'POST',
+            body: canvas.toDataURL(),
+            headers: {
+                'user-agent': 'Mozilla/4.0 MDN Example',
+                'content-type': 'image/png'
+            },
+        };
+        fetch('/cam/img', opts).then(function (response) {
+            return response.text();
+        })
+            .then(function (body) {
+                console.log(body)
+                document.getElementById("snapID").innerHTML = body;
+            });
+    });
+
+</script>
+</html>
